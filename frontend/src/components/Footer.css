@@ -1,0 +1,36 @@
+.footer {
+    background: #2d2d30;
+    padding: 8px 20px;
+    border-top: 1px solid #3e3e42;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #cccccc;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.connection-status span {
+    color: #cccccc;
+}
+
+.footer-online-names {
+    color: #4CAF50;
+    max-width: 50vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+}

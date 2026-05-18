@@ -1,0 +1,221 @@
+const bcrypt = require("bcrypt");
+const User = require("../models/userModel");
+
+// Get all users
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching users" });
+  }
+};
+
+// Get single user by ID
+const getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching user" });
+  }
+};
+
+// Register
+const registerUser = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      password,
+      role,
+      profilePicture,
+      bio,
+      skills,
+      programmingLanguages,
+      university,
+      yearOfStudy,
+      isActive,
+      lastLogin,
+      emailVerified,
+    } = req.body;
+
+    // Required fields check
+    if (!name || !email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Name, email and password are required" });
+    }
+
+    // Check for existing user
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      profilePicture,
+      bio,
+      skills,
+      programmingLanguages,
+      university,
+      yearOfStudy,
+      isActive,
+      lastLogin,
+      emailVerified,
+    });
+
+    await user.save();
+
+    // Create JWT token
+    const token = await user.getJWT();
+
+    // Send back all user data except password
+    const { password: _, ...userData } = user.toObject();
+
+    // Set token in cookie and also send in response for frontend compatibility
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      })
+      .status(201)
+      .json({
+        message: "User registered successfully",
+        data: userData,
+        token: token, // Also send token in response for frontend
+      });
+  } catch (error) {
+    console.error("Register user error:", error);
+    res
+      .status(500)
+      .json({ message: "Error registering user", error: error.message });
+  }
+};
+
+// Login
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
+    }
+
+    const user = await User.findOne({ email }).select("+password");
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // Create JWT
+    const token = await user.getJWT();
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Remove password from user object
+    const { password: _, ...userData } = user.toObject();
+
+    // Send response with token in cookie AND response body for frontend compatibility
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      })
+      .status(200)
+      .json({
+        message: "Login successful",
+        user: userData,
+        token: token, // Also send token in response for frontend
+      });
+
+    console.log("Logged In:", user.name);
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Error logging in", error: error.message });
+  }
+};
+
+// Create new user (admin use)
+const createUser = async (req, res) => {
+  try {
+    const hashedPassword = req.body.password
+      ? await bcrypt.hash(req.body.password, 10)
+      : undefined;
+    const user = new User({ ...req.body, password: hashedPassword });
+    await user.save();
+    res.status(201).json({ ...user.toObject(), password: undefined });
+  } catch (error) {
+    res.status(500).json({ message: "Error creating user" });
+  }
+};
+
+// Update user
+const updateUser = async (req, res) => {
+  try {
+    if (req.body.password) {
+      req.body.password = await bcrypt.hash(req.body.password, 10);
+    }
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    }).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating user" });
+  }
+};
+
+// Delete user
+const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ message: "User deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting user" });
+  }
+};
+
+const logoutUser = async (req, res) => {
+  try {
+    res.cookie("token", null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    });
+    res.json({ message: "Logged Out Successfully" });
+    console.log("Logged Out");
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+module.exports = {
+  getAllUsers,
+  getUserById,
+  registerUser,
+  loginUser,
+  createUser,
+  updateUser,
+  deleteUser,
+  logoutUser,
+};

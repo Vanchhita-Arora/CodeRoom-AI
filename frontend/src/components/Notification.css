@@ -1,0 +1,48 @@
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 14px 20px;
+    background: #4CAF50;
+    color: white;
+    border-radius: 8px;
+    z-index: 1001;
+    max-width: min(360px, calc(100vw - 40px));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    font-size: 14px;
+    line-height: 1.4;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+}
+
+.notification.notification-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.notification.notification-hiding {
+    opacity: 0;
+    transform: translateY(-8px);
+}
+
+.notification.error {
+    background: #f44336;
+}
+
+.notification.info {
+    background: #2196F3;
+}
+
+.notification.success {
+    background: #4CAF50;
+}
+
+@media (max-width: 480px) {
+    .notification {
+        left: 16px;
+        right: 16px;
+        top: 16px;
+    }
+}
