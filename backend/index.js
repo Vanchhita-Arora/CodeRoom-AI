@@ -84,23 +84,32 @@ app.use(errorHandler);
 
 // Start server after DB connects
 const PORT = process.env.PORT || 5000;
+const HOST = "0.0.0.0";
+
+const missingEnv = ["MONGO_URI", "SECRET_KEY"].filter((key) => !process.env[key]);
+if (missingEnv.length) {
+  console.warn(
+    `Missing environment variables (set these in Render → Environment): ${missingEnv.join(", ")}`
+  );
+}
+
+const startServer = (withDatabase) => {
+  server.listen(PORT, HOST, () => {
+    console.log(`Server running on http://${HOST}:${PORT}`);
+    console.log(`Socket.IO server ready for collaborative editing`);
+    if (withDatabase) {
+      console.log("MongoDB connected successfully");
+    } else {
+      console.warn(
+        "Warning: Running without database — auth and persistence will not work"
+      );
+    }
+  });
+};
+
 connectDB()
-  .then(() => {
-    server.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-      console.log(`Socket.IO server ready for collaborative editing`);
-      console.log(`Access collaborative editor at: http://localhost:${PORT}`);
-      console.log(`MongoDB connected successfully`);
-    });
-  })
+  .then(() => startServer(true))
   .catch((err) => {
     console.error("Failed to connect to MongoDB:", err.message);
-    // Start server anyway for development
-    server.listen(PORT, () => {
-      console.log(`Server running on port ${PORT} (without database)`);
-      console.log(`Access collaborative editor at: http://localhost:${PORT}`);
-      console.warn(
-        "Warning: Some features may not work without database connection"
-      );
-    });
+    startServer(false);
   });
