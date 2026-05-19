@@ -24,6 +24,8 @@ const { handleTerminalSocket } = require("./sockets/terminalSocket");
 const app = express();
 const server = http.createServer(app);
 
+const clientUrl = (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/+$/, "");
+
 // CORS configuration
 app.use(cors({
   origin: [
@@ -31,7 +33,7 @@ app.use(cors({
     "http://127.0.0.1:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3001",
-    process.env.CLIENT_URL || "http://localhost:3000"
+    clientUrl
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
@@ -44,7 +46,7 @@ const io = socketIo(server, {
       "http://127.0.0.1:3000",
       "http://localhost:3001",
       "http://127.0.0.1:3001",
-      process.env.CLIENT_URL || "http://localhost:3000"
+      clientUrl
     ],
     methods: ["GET", "POST"],
     credentials: true,
