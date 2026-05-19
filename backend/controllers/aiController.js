@@ -1,22 +1,31 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// Access the API key from environment variables
+// Access the API keys from environment variables
 const apiKey = process.env.GEMINI_API_KEY;
+const chatApiKey = process.env.CHAT_GEMINI_API_KEY || apiKey;
 
 let genAI = null;
 if (apiKey) {
     genAI = new GoogleGenerativeAI(apiKey);
 } else {
-    console.warn("GEMINI_API_KEY is not set. AI features will be disabled.");
+    console.warn("GEMINI_API_KEY is not set. Review/Test/Architecture features will be disabled.");
 }
 
-const getAIResponse = async (prompt, systemInstruction) => {
-    if (!genAI) {
-        throw new Error("AI is not configured. Missing GEMINI_API_KEY.");
+let chatGenAI = null;
+if (chatApiKey) {
+    chatGenAI = new GoogleGenerativeAI(chatApiKey);
+} else {
+    console.warn("CHAT_GEMINI_API_KEY and GEMINI_API_KEY are not set. AI Chat features will be disabled.");
+}
+
+const getAIResponse = async (prompt, systemInstruction, isChat = false) => {
+    const aiInstance = isChat ? chatGenAI : genAI;
+    if (!aiInstance) {
+        throw new Error(`AI is not configured. Missing ${isChat ? 'CHAT_GEMINI_API_KEY' : 'GEMINI_API_KEY'}.`);
     }
     
     // Create the generative model with the systemInstruction
-    const model = genAI.getGenerativeModel({ 
+    const model = aiInstance.getGenerativeModel({ 
         model: "gemini-flash-latest",
         systemInstruction: systemInstruction 
     });
@@ -30,8 +39,11 @@ const handleAIRequest = async (req, res) => {
     try {
         const { action, code, language, context } = req.body;
         
-        if (!genAI) {
-            return res.status(503).json({ success: false, message: "AI features are currently unavailable." });
+        const isChat = (action === "chat");
+        const activeGenAI = isChat ? chatGenAI : genAI;
+
+        if (!activeGenAI) {
+            return res.status(503).json({ success: false, message: `AI ${action} feature is currently unavailable due to missing configuration.` });
         }
 
         let prompt = "";
@@ -58,7 +70,7 @@ const handleAIRequest = async (req, res) => {
                 return res.status(400).json({ success: false, message: "Invalid action specified." });
         }
 
-        const responseText = await getAIResponse(prompt, systemInstruction);
+        const responseText = await getAIResponse(prompt, systemInstruction, isChat);
         return res.status(200).json({ success: true, response: responseText });
     } catch (error) {
         console.error("AI Request Error:", error);
