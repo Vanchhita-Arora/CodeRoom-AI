@@ -169,7 +169,7 @@ const handleCollaborativeEditor = (io) => {
         // Join a coding session room
         socket.on('join-session', async (data) => {
             try {
-                const { roomId } = data;
+                const { roomId, mode = 'ide', role = 'student' } = data;
 
                 const sessionKey = `${userId}-${roomId}`;
                 const isDuplicateJoin = userSessions.has(sessionKey);
@@ -186,7 +186,8 @@ const handleCollaborativeEditor = (io) => {
                             roomId: roomId,
                             currentCode: defaultCode,
                             language: 'javascript',
-                            participants: [socket.user]
+                            participants: [socket.user],
+                            mode: mode
                         };
 
                         try {
@@ -196,7 +197,8 @@ const handleCollaborativeEditor = (io) => {
                                 currentCode: defaultCode,
                                 language: session.language,
                                 participants: [socket.user._id],
-                                creator: socket.user._id
+                                creator: socket.user._id,
+                                mode: mode
                             });
                             await newSession.save();
                             session = await Session.findOne({ roomId }).populate('participants', 'name email');
@@ -222,7 +224,8 @@ const handleCollaborativeEditor = (io) => {
                         roomId: roomId,
                         currentCode: '// Welcome to collaborative editor\n// Anyone can edit and collaborate!\nconsole.log("Hello World!");',
                         language: 'javascript',
-                        participants: [socket.user]
+                        participants: [socket.user],
+                        mode: mode
                     };
                 }
 
@@ -247,6 +250,7 @@ const handleCollaborativeEditor = (io) => {
                         code: session.currentCode || '',
                         language: session.language || 'javascript',
                         participants: session.participants,
+                        mode: session.mode || mode,
                         cursors: new Map(),
                         connectedUsers: new Set(),
                         userProfiles: new Map()
@@ -265,7 +269,7 @@ const handleCollaborativeEditor = (io) => {
                     _id: socket.user._id,
                     name: socket.user.name,
                     email: socket.user.email,
-                    role: socket.user.role || 'student'
+                    role: role || socket.user.role || 'student'
                 });
 
                 const onlineUsers = await getOnlineUsersPayload(activeSession);
@@ -278,7 +282,7 @@ const handleCollaborativeEditor = (io) => {
                                 _id: socket.user._id,
                                 name: socket.user.name,
                                 email: socket.user.email,
-                                role: socket.user.role
+                                role: role || socket.user.role
                             },
                             connectedUsers: Array.from(activeSession.connectedUsers),
                             onlineUsers: updatedOnline
@@ -290,6 +294,7 @@ const handleCollaborativeEditor = (io) => {
                     roomId,
                     code: activeSession.code,
                     language: activeSession.language,
+                    mode: activeSession.mode,
                     participants: session.participants,
                     connectedUsers: Array.from(activeSession.connectedUsers),
                     onlineUsers,

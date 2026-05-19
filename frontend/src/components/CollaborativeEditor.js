@@ -16,11 +16,23 @@ import Footer from './Footer';
 import CallNotification from './CallNotification';
 import AudioControls from './AudioControls';
 import Notification from './Notification';
+import Terminal from './Terminal';
+import AgentChat from './AgentChat';
+import AIToolbar from './AIToolbar';
 
 // Backend server URL - change this to match your backend port
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
 
 const CollaborativeEditor = ({ initialRoomId }) => {
+    // Read URL params
+    const searchParams = new URLSearchParams(window.location.search);
+    const mode = searchParams.get('mode') || 'ide';
+    const role = searchParams.get('role') || 'student';
+
+    // A user is restricted from AI features if they are explicitly an interviewee or if their DB role is 'student'
+    const isRestrictedUser = (mode === 'interview' && role === 'interviewee') || 
+                             (authUtils.getCurrentUser()?.role === 'student');
+
     // State management
     const [socket, setSocket] = useState(null);
     const [editorValue, setEditorValue] = useState('// Write your code here\nconsole.log("Hello World!");');
@@ -796,7 +808,14 @@ const CollaborativeEditor = ({ initialRoomId }) => {
     ].flat();
 
     return (
-        <div className="collaborative-editor">
+        <div className="collaborative-editor" style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#1e1e1e' }}>
+            <div style={{ padding: '8px 16px', background: '#000', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <a href="/dashboard" style={{ color: '#fff', textDecoration: 'none', fontWeight: 'bold', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '18px' }}>←</span> Back to Dashboard
+                </a>
+                <span style={{color: '#aaa', fontSize: '12px', letterSpacing: '1px'}}>MODE: <strong style={{color: '#fff'}}>{mode.toUpperCase()}</strong> | ROLE: <strong style={{color: '#fff'}}>{role.toUpperCase()}</strong></span>
+            </div>
+
             {showConnectionModal && (
                 <ConnectionModal
                     onConnect={connectToSession}
@@ -827,29 +846,54 @@ const CollaborativeEditor = ({ initialRoomId }) => {
                 }}
             />
 
-            <div className="editor-container">
-                <CodeMirror
-                    value={editorValue}
-                    onChange={handleEditorChange}
-                    extensions={extensions}
-                    basicSetup={{
-                        lineNumbers: true,
-                        foldGutter: true,
-                        dropCursor: false,
-                        allowMultipleSelections: false,
-                        indentOnInput: true,
-                        bracketMatching: true,
-                        closeBrackets: true,
-                        autocompletion: true,
-                        highlightSelectionMatches: false,
-                        searchKeymap: true,
-                    }}
-                />
-            </div>
+            <div style={{ display: 'flex', flexDirection: 'row', flexGrow: 1, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', flex: isRestrictedUser ? '1' : (mode === 'ide' ? '0 0 65%' : '0 0 70%'), borderRight: '1px solid #333' }}>
+                    
+                    {!isRestrictedUser && <AIToolbar mode={mode} role={role} codeContext={editorValue} language={language} setOutput={setOutput} />}
 
-            <div className="output-section">
-                <h3>Output</h3>
-                <pre id="output">{output}</pre>
+                    <div className="editor-container" style={{ flexGrow: 1, overflow: 'hidden' }}>
+                        <CodeMirror
+                            value={editorValue}
+                            onChange={handleEditorChange}
+                            extensions={extensions}
+                            basicSetup={{
+                                lineNumbers: true,
+                                foldGutter: true,
+                                dropCursor: false,
+                                allowMultipleSelections: false,
+                                indentOnInput: true,
+                                bracketMatching: true,
+                                closeBrackets: true,
+                                autocompletion: true,
+                                highlightSelectionMatches: false,
+                                searchKeymap: true,
+                            }}
+                            theme={oneDark}
+                        />
+                    </div>
+                    {mode === 'ide' && (
+                        <div style={{ height: '30%', borderTop: '1px solid #333' }}>
+                            <Terminal roomId={currentRoomId} />
+                        </div>
+                    )}
+                    {
+        <div className="output-section" style={{ height: '150px', overflowY: 'auto', background: '#1e1e1e', color: '#f8f8f2', borderTop: '1px solid #333', padding: '10px' }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#888' }}>Output Console</h3>
+            <pre id="output" style={{ margin: 0, fontFamily: 'monospace', fontSize: '13px' }}>{output}</pre>
+        </div>
+    }
+                </div>
+                
+                {(!isRestrictedUser) && (
+                    <div style={{ flex: mode === 'ide' ? '0 0 35%' : '0 0 30%', display: 'flex', flexDirection: 'column' }}>
+                        <AgentChat 
+                            mode={mode} 
+                            role={role} 
+                            codeContext={editorValue} 
+                            language={language} 
+                        />
+                    </div>
+                )}
             </div>
 
             <Footer

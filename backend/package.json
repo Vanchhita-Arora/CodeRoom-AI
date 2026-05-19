@@ -1,5 +1,5 @@
 {
-  "name": "7thsem",
+  "name": "8thsem",
   "version": "1.0.0",
   "description": "",
   "homepage": "https://github.com/PriyanshuSaini02/codemate#readme",
@@ -19,6 +19,7 @@
     "start": "nodemon index.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
     "codemirror": "^6.0.2",
@@ -30,6 +31,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.17.1",
     "node-fetch": "^3.3.2",
+    "node-pty": "^1.1.0",
     "nodemon": "^3.1.10",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0",

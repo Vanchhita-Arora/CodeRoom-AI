@@ -4,7 +4,7 @@ import React from 'react';
 // This handles client-side authentication logic for React
 
 // API base URL - adjust this to match your backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
 
 // Token management
 export const tokenManager = {

@@ -15,9 +15,11 @@ const handRaiseRoute = require("./routes/handRaiseRoute");
 const collaborativeEditorRoutes = require("./routes/collaborativeEditorRoute");
 const executeCode = require("./routes/executeRoute");
 const callRoutes = require("./routes/callRoute");
+const aiRoutes = require("./routes/aiRoute");
 const {
   handleCollaborativeEditor,
 } = require("./sockets/collaborativeEditorSocket");
+const { handleTerminalSocket } = require("./sockets/terminalSocket");
 
 const app = express();
 const server = http.createServer(app);
@@ -72,9 +74,11 @@ app.use("/api/hand", handRaiseRoute);
 app.use("/api/editor", executeCode);
 app.use("/api/editor", collaborativeEditorRoutes);
 app.use("/api/call", callRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Initialize Socket.IO for collaborative editing
 handleCollaborativeEditor(io);
+handleTerminalSocket(io);
 // Error Handling Middleware
 app.use(errorHandler);
 
