@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { apiClient } from '../lib/api';
 import Notification from './Notification';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+const rawBackendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+const BACKEND_URL = rawBackendUrl.replace(/\/+$/, '');
 
 const AIToolbar = ({ mode, role, codeContext, language, setOutput }) => {
     const [loading, setLoading] = useState(false);

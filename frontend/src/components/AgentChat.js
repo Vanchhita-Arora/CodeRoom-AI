@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+const rawBackendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+const BACKEND_URL = rawBackendUrl.replace(/\/+$/, '');
 
 const AgentChat = ({ mode, role, codeContext, language }) => {
     const [loading, setLoading] = useState(false);
