@@ -3,7 +3,7 @@ WORKDIR /app
 
 # Install production dependencies only
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm install -g npm@11.14.1 && npm ci --omit=dev
 
 # Copy source files
 COPY . .
