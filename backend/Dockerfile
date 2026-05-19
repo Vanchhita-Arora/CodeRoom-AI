@@ -2,11 +2,11 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install production dependencies only
-COPY package*.json ./
+COPY backend/package*.json ./
 RUN npm install -g npm@11.14.1 && npm ci --omit=dev
 
 # Copy source files
-COPY . .
+COPY backend/ .
 
 # Runtime image
 FROM node:20-alpine
