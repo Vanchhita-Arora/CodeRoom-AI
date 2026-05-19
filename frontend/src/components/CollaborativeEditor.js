@@ -20,8 +20,8 @@ import Terminal from './Terminal';
 import AgentChat from './AgentChat';
 import AIToolbar from './AIToolbar';
 
-// Backend server URL - change this to match your backend port
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+const rawBackendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+const BACKEND_URL = rawBackendUrl.replace(/\/+$/, '');
 
 const CollaborativeEditor = ({ initialRoomId }) => {
     // Read URL params

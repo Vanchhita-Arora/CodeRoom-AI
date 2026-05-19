@@ -1,6 +1,8 @@
 import { authUtils } from './auth.js';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : 'http://localhost:5001/api';
+const rawBackendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+const cleanBackendUrl = rawBackendUrl.replace(/\/+$/, '');
+const API_BASE_URL = `${cleanBackendUrl}/api`;
 
 class ApiClient {
     async request(endpoint, options = {}) {
