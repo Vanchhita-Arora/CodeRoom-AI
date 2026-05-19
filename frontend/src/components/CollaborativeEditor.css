@@ -305,3 +305,46 @@
 .call-participants {
     color: #aaa;
 }
+
+/* Workspace Layout Classes */
+.workspace-container {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.left-editor-panel {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #333;
+    overflow: hidden;
+}
+
+.right-chat-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Mobile Responsive Styling */
+@media (max-width: 768px) {
+    .workspace-container {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    
+    .left-editor-panel {
+        flex: none !important;
+        width: 100% !important;
+        border-right: none;
+        border-bottom: 1px solid #333;
+        height: 60vh !important;
+    }
+    
+    .right-chat-panel {
+        flex: none !important;
+        width: 100% !important;
+        height: 450px !important;
+    }
+}

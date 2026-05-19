@@ -846,14 +846,15 @@ const CollaborativeEditor = ({ initialRoomId }) => {
                 }}
             />
 
-            <div style={{ display: 'flex', flexDirection: 'row', flexGrow: 1, overflow: 'hidden' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', flex: isRestrictedUser ? '1' : (mode === 'ide' ? '0 0 65%' : '0 0 70%'), borderRight: '1px solid #333' }}>
+            <div className="workspace-container">
+                <div className="left-editor-panel" style={{ flex: isRestrictedUser ? '1' : (mode === 'ide' ? '0 0 65%' : '0 0 70%') }}>
                     
                     {!isRestrictedUser && <AIToolbar mode={mode} role={role} codeContext={editorValue} language={language} setOutput={setOutput} />}
 
                     <div className="editor-container" style={{ flexGrow: 1, overflow: 'hidden' }}>
                         <CodeMirror
                             value={editorValue}
+                            height="100%"
                             onChange={handleEditorChange}
                             extensions={extensions}
                             basicSetup={{
@@ -877,15 +878,15 @@ const CollaborativeEditor = ({ initialRoomId }) => {
                         </div>
                     )}
                     {
-        <div className="output-section" style={{ height: '150px', overflowY: 'auto', background: '#1e1e1e', color: '#f8f8f2', borderTop: '1px solid #333', padding: '10px' }}>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#888' }}>Output Console</h3>
-            <pre id="output" style={{ margin: 0, fontFamily: 'monospace', fontSize: '13px' }}>{output}</pre>
-        </div>
-    }
+                        <div className="output-section" style={{ height: '150px', overflowY: 'auto', background: '#1e1e1e', color: '#f8f8f2', borderTop: '1px solid #333', padding: '10px' }}>
+                            <h3 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#888' }}>Output Console</h3>
+                            <pre id="output" style={{ margin: 0, fontFamily: 'monospace', fontSize: '13px' }}>{output}</pre>
+                        </div>
+                    }
                 </div>
                 
                 {(!isRestrictedUser) && (
-                    <div style={{ flex: mode === 'ide' ? '0 0 35%' : '0 0 30%', display: 'flex', flexDirection: 'column' }}>
+                    <div className="right-chat-panel" style={{ flex: mode === 'ide' ? '0 0 35%' : '0 0 30%' }}>
                         <AgentChat 
                             mode={mode} 
                             role={role} 
