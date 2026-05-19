@@ -1,12 +1,12 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install dependencies
-COPY frontend/package*.json ./
+# Install dependencies (build context: frontend/)
+COPY package*.json ./
 RUN npm ci
 
 # Copy source and build React app
-COPY frontend/ .
+COPY . .
 ARG REACT_APP_BACKEND_URL=http://backend:5001
 ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 RUN npm run build

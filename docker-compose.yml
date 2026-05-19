@@ -1,8 +1,8 @@
 services:
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: codemate-backend
     env_file:
       - ./backend/.env
@@ -12,8 +12,8 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
       args:
         REACT_APP_BACKEND_URL: http://backend:5001
     container_name: codemate-frontend
