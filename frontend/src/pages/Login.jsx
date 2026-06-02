@@ -47,13 +47,13 @@ export default function Login() {
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="bg-red-500/10 border-red-500/25 text-red-400 rounded-xl">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
         
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email" className="text-gray-300 text-sm font-semibold">Email Address</Label>
           <Input
             id="email"
             name="email"
@@ -62,11 +62,12 @@ export default function Login() {
             value={formData.email}
             onChange={handleChange}
             placeholder="Enter your email"
+            className="w-full bg-black/40 border-white/10 text-white placeholder:text-gray-500 focus:border-pink-500 focus:ring-pink-500 h-12 rounded-xl"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password" className="text-gray-300 text-sm font-semibold">Password</Label>
           <Input
             id="password"
             name="password"
@@ -75,24 +76,25 @@ export default function Login() {
             value={formData.password}
             onChange={handleChange}
             placeholder="Enter your password"
+            className="w-full bg-black/40 border-white/10 text-white placeholder:text-gray-500 focus:border-pink-500 focus:ring-pink-500 h-12 rounded-xl"
           />
         </div>
 
         <Button
           type="submit"
-          className="w-full"
+          className="w-full py-6 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-white font-bold text-base shadow-lg hover:shadow-pink-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
           disabled={loading}
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Sign In
         </Button>
 
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
+        <div className="text-center mt-6">
+          <p className="text-sm text-slate-400">
             Don't have an account?{' '}
             <Link 
               to="/register" 
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-semibold text-pink-500 hover:text-pink-400 transition-colors"
             >
               Sign up
             </Link>

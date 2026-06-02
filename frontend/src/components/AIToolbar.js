@@ -9,8 +9,8 @@ const AIToolbar = ({ mode, role, codeContext, language, setOutput }) => {
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState({ show: false, message: '', type: 'info' });
 
-    // Ensure we don't render anything if the user is an interviewee in interview mode
-    if (mode === 'interview' && role === 'interviewee') {
+    // Ensure we don't render anything if the user is a candidate or interviewee in interview mode
+    if (mode === 'interview' && (role === 'interviewee' || role === 'candidate')) {
         return null;
     }
 

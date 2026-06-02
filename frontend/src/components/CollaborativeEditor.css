@@ -2,8 +2,8 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background: #1e1e1e;
-    color: white;
+    background: #0d0d11;
+    color: #f3f4f6;
 }
 
 .header {
@@ -317,7 +317,7 @@
 .left-editor-panel {
     display: flex;
     flex-direction: column;
-    border-right: 1px solid #333;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
     overflow: hidden;
 }
 

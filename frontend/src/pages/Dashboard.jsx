@@ -9,16 +9,16 @@ import { apiClient } from '../lib/api';
 export default function Dashboard() {
   const [roomId, setRoomId] = useState('');
   const [mode, setMode] = useState('interview');
-  const [role, setRole] = useState('interviewee');
+  const [role, setRole] = useState('candidate');
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const currentUser = authUtils.getCurrentUser();
     setUser(currentUser);
-    // If student, default to interviewee
+    // If student, default to candidate
     if (currentUser?.role === 'student') {
-        setRole('interviewee');
+        setRole('candidate');
     } else {
         setRole('interviewer');
     }
@@ -125,14 +125,14 @@ export default function Dashboard() {
                     <p className="text-sm text-gray-400">Full access to AI Code Review and Test generation tools.</p>
                   </div>
                   <div 
-                    onClick={() => setRole('interviewee')}
-                    className={`cursor-pointer p-5 rounded-xl border-2 transition-all ${role === 'interviewee' ? 'border-blue-500 bg-blue-500/10' : 'border-white/10 bg-black/20 hover:border-white/30'}`}
+                    onClick={() => setRole('candidate')}
+                    className={`cursor-pointer p-5 rounded-xl border-2 transition-all ${role === 'candidate' ? 'border-blue-500 bg-blue-500/10' : 'border-white/10 bg-black/20 hover:border-white/30'}`}
                   >
-                    <h3 className="text-lg font-bold mb-1">Interviewee</h3>
+                    <h3 className="text-lg font-bold mb-1">Candidate</h3>
                     <p className="text-sm text-gray-400">Clean coding environment without AI assistance.</p>
                   </div>
                 </div>
-                {isStudent && <p className="text-red-400 text-sm mt-3">Students are restricted to the Interviewee role.</p>}
+                {isStudent && <p className="text-red-400 text-sm mt-3">Students are restricted to the Candidate role.</p>}
               </div>
             )}
 

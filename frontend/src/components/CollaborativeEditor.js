@@ -24,13 +24,18 @@ const rawBackendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:500
 const BACKEND_URL = rawBackendUrl.replace(/\/+$/, '');
 
 const CollaborativeEditor = ({ initialRoomId }) => {
-    // Read URL params
-    const searchParams = new URLSearchParams(window.location.search);
-    const mode = searchParams.get('mode') || 'ide';
-    const role = searchParams.get('role') || 'student';
+    // Read URL params and store in state to persist across url replacements
+    const [mode] = useState(() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('mode') || 'ide';
+    });
+    const [role] = useState(() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('role') || 'student';
+    });
 
-    // A user is restricted from AI features if they are explicitly an interviewee or if their DB role is 'student'
-    const isRestrictedUser = (mode === 'interview' && role === 'interviewee') || 
+    // A user is restricted from AI features if they are explicitly an interviewee/candidate or if their DB role is 'student'
+    const isRestrictedUser = (mode === 'interview' && (role === 'interviewee' || role === 'candidate')) || 
                              (authUtils.getCurrentUser()?.role === 'student');
 
     // State management
@@ -334,7 +339,7 @@ const CollaborativeEditor = ({ initialRoomId }) => {
             );
             setLanguageMode(data.language || 'javascript');
 
-            const newUrl = `${window.location.pathname}?name=${encodeURIComponent(data.user.name)}&room=${encodeURIComponent(roomId)}`;
+            const newUrl = `${window.location.pathname}?name=${encodeURIComponent(data.user.name)}&room=${encodeURIComponent(roomId)}&mode=${encodeURIComponent(mode)}&role=${encodeURIComponent(role)}`;
             window.history.replaceState({}, '', newUrl);
         });
 
@@ -452,7 +457,7 @@ const CollaborativeEditor = ({ initialRoomId }) => {
         });
 
         setSocket(socketInstance);
-    }, [applyOnlineUsers, showNotificationMessage]);
+    }, [applyOnlineUsers, showNotificationMessage, mode, role]);
 
     const connectToSessionRef = useRef(connectToSession);
     connectToSessionRef.current = connectToSession;
@@ -878,9 +883,9 @@ const CollaborativeEditor = ({ initialRoomId }) => {
                         </div>
                     )}
                     {
-                        <div className="output-section" style={{ height: '150px', overflowY: 'auto', background: '#1e1e1e', color: '#f8f8f2', borderTop: '1px solid #333', padding: '10px' }}>
-                            <h3 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#888' }}>Output Console</h3>
-                            <pre id="output" style={{ margin: 0, fontFamily: 'monospace', fontSize: '13px' }}>{output}</pre>
+                        <div className="output-section" style={{ height: '150px', overflowY: 'auto', background: '#0a0a0c', color: '#f3f4f6', borderTop: '1px solid rgba(255,255,255,0.08)', padding: '12px 16px' }}>
+                            <h3 style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#a855f7' }}>Output Console</h3>
+                            <pre id="output" style={{ margin: 0, fontFamily: 'monospace', fontSize: '13px', whiteSpace: 'pre-wrap', color: '#e5e7eb' }}>{output}</pre>
                         </div>
                     }
                 </div>
