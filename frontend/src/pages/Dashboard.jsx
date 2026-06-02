@@ -52,21 +52,21 @@ export default function Dashboard() {
   const isStudent = user?.role === 'student';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-black text-white font-sans selection:bg-pink-500 selection:text-white">
-      <header className="border-b border-white/10 bg-black/20 backdrop-blur-md sticky top-0 z-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-400 via-purple-400 to-fuchsia-400 text-white font-sans selection:bg-pink-300 selection:text-white">
+      <header className="border-b border-white/15 bg-[#1e1b3a]/90 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex justify-between items-center py-5">
-            <h1 className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500">
+            <h1 className="text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-pink-100 to-indigo-100 drop-shadow-sm">
               CodeMate AI
             </h1>
             <div className="flex items-center space-x-6">
-              <span className="text-gray-300 font-medium text-sm">
-                Welcome, <span className="text-white font-bold">{user?.name || 'User'}</span>
-                {user?.role && <span className="ml-2 px-2 py-1 text-xs rounded-full bg-white/10">{user.role}</span>}
+              <span className="text-white/80 font-medium text-sm flex items-center">
+                Welcome, <span className="text-white font-bold ml-1">{user?.name || 'User'}</span>
+                {user?.role && <span className="ml-3 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border border-white/40 bg-white/20 text-white shadow-sm">{user.role}</span>}
               </span>
               <button 
                 onClick={handleLogout} 
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all shadow-lg hover:shadow-pink-500/20"
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-white/10 hover:bg-white/20 border border-white/25 text-white transition-all shadow-sm hover:shadow-pink-500/30"
               >
                 Logout
               </button>
@@ -76,35 +76,33 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-4xl mx-auto py-16 px-6 relative">
-        {/* Ambient glow effects */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px] pointer-events-none"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-[120px] pointer-events-none"></div>
 
-        <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-8 sm:p-10">
+
+        <div className="relative bg-[#1e1b3a]/95 border border-white/15 rounded-3xl shadow-2xl overflow-hidden p-8 sm:p-10">
           <div className="text-center mb-10">
-            <h2 className="text-4xl font-black mb-3">Join Workspace</h2>
-            <p className="text-gray-400 text-lg">Collaborate, interview, and build with Agentic AI.</p>
+            <h2 className="text-4xl font-black mb-3 text-white drop-shadow-md">Join Workspace</h2>
+            <p className="text-indigo-100/90 text-lg drop-shadow-sm font-medium">Collaborate, interview, and build with Agentic AI.</p>
           </div>
           
           <form onSubmit={handleJoinRoom} className="space-y-8">
             
             {/* Mode Selection */}
             <div>
-              <Label className="text-gray-300 text-sm font-bold uppercase tracking-wider mb-4 block">Select Environment Mode</Label>
+              <Label className="text-white/90 text-xs font-bold uppercase tracking-widest mb-4 block drop-shadow-sm">Select Environment Mode</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div 
                   onClick={() => setMode('interview')}
-                  className={`cursor-pointer p-5 rounded-xl border-2 transition-all ${mode === 'interview' ? 'border-pink-500 bg-pink-500/10' : 'border-white/10 bg-black/20 hover:border-white/30'}`}
+                  className={`cursor-pointer p-5 rounded-xl border-2 transition-all duration-200 ${mode === 'interview' ? 'border-pink-300 bg-pink-500/25 shadow-[0_0_20px_rgba(244,114,182,0.35)]' : 'border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10'}`}
                 >
-                  <h3 className="text-xl font-bold mb-1">Interview Mode</h3>
-                  <p className="text-sm text-gray-400">Role-based technical interview with AI evaluator tools.</p>
+                  <h3 className="text-xl font-bold mb-1 text-white">Interview Mode</h3>
+                  <p className="text-sm text-indigo-100/80">Role-based technical interview with AI evaluator tools.</p>
                 </div>
                 <div 
                   onClick={() => setMode('ide')}
-                  className={`cursor-pointer p-5 rounded-xl border-2 transition-all ${mode === 'ide' ? 'border-violet-500 bg-violet-500/10' : 'border-white/10 bg-black/20 hover:border-white/30'}`}
+                  className={`cursor-pointer p-5 rounded-xl border-2 transition-all duration-200 ${mode === 'ide' ? 'border-indigo-300 bg-indigo-500/25 shadow-[0_0_20px_rgba(129,140,248,0.35)]' : 'border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10'}`}
                 >
-                  <h3 className="text-xl font-bold mb-1">Collaborative IDE</h3>
-                  <p className="text-sm text-gray-400">Pair programming with Terminal and Architecture AI.</p>
+                  <h3 className="text-xl font-bold mb-1 text-white">Collaborative IDE</h3>
+                  <p className="text-sm text-indigo-100/80">Pair programming with Terminal and Architecture AI.</p>
                 </div>
               </div>
             </div>
@@ -112,60 +110,60 @@ export default function Dashboard() {
             {/* Role Selection (Only for Interview Mode) */}
             {mode === 'interview' && (
               <div className="animate-in fade-in slide-in-from-top-4 duration-300">
-                <Label className="text-gray-300 text-sm font-bold uppercase tracking-wider mb-4 block">Select Your Role</Label>
+                <Label className="text-white/90 text-xs font-bold uppercase tracking-widest mb-4 block drop-shadow-sm">Select Your Role</Label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div 
                     onClick={() => !isStudent && setRole('interviewer')}
-                    className={`p-5 rounded-xl border-2 transition-all ${isStudent ? 'opacity-50 cursor-not-allowed border-white/5 bg-black/20' : 'cursor-pointer'} ${role === 'interviewer' && !isStudent ? 'border-emerald-500 bg-emerald-500/10' : (isStudent ? '' : 'border-white/10 bg-black/20 hover:border-white/30')}`}
+                    className={`p-5 rounded-xl border-2 transition-all duration-200 ${isStudent ? 'opacity-50 cursor-not-allowed border-white/10 bg-white/5' : 'cursor-pointer'} ${role === 'interviewer' && !isStudent ? 'border-emerald-300 bg-emerald-500/25 shadow-[0_0_20px_rgba(52,211,153,0.35)]' : (isStudent ? '' : 'border-white/10 bg-white/5 hover:border-emerald-300/50 hover:bg-white/10')}`}
                   >
-                    <h3 className="text-lg font-bold mb-1 flex items-center">
+                    <h3 className="text-lg font-bold mb-1 flex items-center text-white">
                       Interviewer 
-                      {isStudent && <span className="ml-2 text-xs bg-red-500/20 text-red-300 px-2 py-0.5 rounded">Locked</span>}
+                      {isStudent && <span className="ml-2 text-xs bg-red-500/30 text-red-100 px-2 py-0.5 rounded border border-red-400/30">Locked</span>}
                     </h3>
-                    <p className="text-sm text-gray-400">Full access to AI Code Review and Test generation tools.</p>
+                    <p className="text-sm text-indigo-100/80">Full access to AI Code Review and Test generation tools.</p>
                   </div>
                   <div 
                     onClick={() => setRole('candidate')}
-                    className={`cursor-pointer p-5 rounded-xl border-2 transition-all ${role === 'candidate' ? 'border-blue-500 bg-blue-500/10' : 'border-white/10 bg-black/20 hover:border-white/30'}`}
+                    className={`cursor-pointer p-5 rounded-xl border-2 transition-all duration-200 ${role === 'candidate' ? 'border-blue-300 bg-blue-500/25 shadow-[0_0_20px_rgba(96,165,250,0.35)]' : 'border-white/10 bg-white/5 hover:border-blue-300/50 hover:bg-white/10'}`}
                   >
-                    <h3 className="text-lg font-bold mb-1">Candidate</h3>
-                    <p className="text-sm text-gray-400">Clean coding environment without AI assistance.</p>
+                    <h3 className="text-lg font-bold mb-1 text-white">Candidate</h3>
+                    <p className="text-sm text-indigo-100/80">Clean coding environment without AI assistance.</p>
                   </div>
                 </div>
-                {isStudent && <p className="text-red-400 text-sm mt-3">Students are restricted to the Candidate role.</p>}
+                {isStudent && <p className="text-pink-200/90 text-sm mt-3 font-medium drop-shadow-sm">Students are restricted to the Candidate role.</p>}
               </div>
             )}
 
             <div className="pt-4">
-              <Label htmlFor="roomId" className="text-gray-300 text-sm font-bold uppercase tracking-wider mb-2 block">Room ID</Label>
+              <Label htmlFor="roomId" className="text-white/90 text-xs font-bold uppercase tracking-widest mb-2 block drop-shadow-sm">Room ID</Label>
               <Input
                 id="roomId"
                 type="text"
                 value={roomId}
                 onChange={(e) => setRoomId(e.target.value)}
                 placeholder="Enter existing room ID..."
-                className="w-full bg-black/40 border-white/20 text-white placeholder:text-gray-600 focus:border-pink-500 focus:ring-pink-500 h-14 text-lg rounded-xl"
+                className="w-full bg-white/5 border-white/20 text-white placeholder:text-indigo-200/50 focus:border-pink-300 focus:ring-pink-300 h-14 text-lg rounded-xl shadow-inner transition-all"
               />
             </div>
 
             <button 
               type="submit" 
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-white font-bold text-lg shadow-lg hover:shadow-pink-500/25 transition-all transform hover:-translate-y-1"
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-400 to-fuchsia-400 hover:from-indigo-300 hover:to-fuchsia-300 text-white font-bold text-lg shadow-lg hover:shadow-indigo-400/40 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
             >
               Join Workspace
             </button>
           </form>
 
           <div className="mt-8 flex items-center justify-center space-x-4">
-            <div className="h-px bg-white/10 flex-grow"></div>
-            <span className="text-gray-500 text-sm font-medium uppercase tracking-wider">OR</span>
-            <div className="h-px bg-white/10 flex-grow"></div>
+            <div className="h-px bg-white/15 flex-grow"></div>
+            <span className="text-white/40 text-xs font-bold uppercase tracking-wider">OR</span>
+            <div className="h-px bg-white/15 flex-grow"></div>
           </div>
 
           <div className="mt-8">
             <button 
               onClick={handleCreateRoom} 
-              className="w-full py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-lg transition-all"
+              className="w-full py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-bold text-lg transition-all shadow-lg hover:shadow-pink-500/10 active:scale-[0.99]"
             >
               ✨ Create New Workspace
             </button>

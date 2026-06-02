@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 const rawBackendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
 const BACKEND_URL = rawBackendUrl.replace(/\/+$/, '');
 
-const AgentChat = ({ mode, role, codeContext, language }) => {
+const AgentChat = ({ mode, role, codeContext, language, currentUser }) => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
@@ -23,6 +23,10 @@ const AgentChat = ({ mode, role, codeContext, language }) => {
 
         const userMsg = input;
         setInput('');
+        
+        // Save current history before adding the new message for the API call
+        const historyContext = messages.slice(-10);
+        
         setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
         
         setLoading(true);
@@ -34,7 +38,15 @@ const AgentChat = ({ mode, role, codeContext, language }) => {
                     action: 'chat',
                     code: userMsg,
                     language: language,
-                    context: `Mode: ${mode}, Role: ${role}, Code:\n${codeContext}`
+                    context: `Mode: ${mode}, Role: ${role}, Code:\n${codeContext}`,
+                    conversationHistory: historyContext,
+                    userProfile: currentUser ? {
+                        name: currentUser.name,
+                        skills: currentUser.skills,
+                        programmingLanguages: currentUser.programmingLanguages,
+                        university: currentUser.university,
+                        yearOfStudy: currentUser.yearOfStudy
+                    } : null
                 })
             });
             const data = await res.json();

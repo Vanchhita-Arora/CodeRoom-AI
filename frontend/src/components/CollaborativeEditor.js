@@ -7,7 +7,7 @@ import { cpp } from '@codemirror/lang-cpp';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import io from 'socket.io-client';
-
+import SimplePeer from 'simple-peer';
 import './CollaborativeEditor.css';
 import ConnectionModal from './ConnectionModal';
 import { authUtils } from '../lib/auth';
@@ -19,6 +19,8 @@ import Notification from './Notification';
 import Terminal from './Terminal';
 import AgentChat from './AgentChat';
 import AIToolbar from './AIToolbar';
+import ScorecardModal from './ScorecardModal';
+import AIResultModal from './AIResultModal';
 
 const rawBackendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
 const BACKEND_URL = rawBackendUrl.replace(/\/+$/, '');
@@ -42,14 +44,16 @@ const CollaborativeEditor = ({ initialRoomId }) => {
     const [socket, setSocket] = useState(null);
     const [editorValue, setEditorValue] = useState('// Write your code here\nconsole.log("Hello World!");');
     const [currentRoomId, setCurrentRoomId] = useState(initialRoomId || '');
-    const [currentUser, setCurrentUser] = useState(null);
+    const [currentUser, setCurrentUser] = useState(authUtils.getCurrentUser() || null);
     const [isUpdatingFromRemote, setIsUpdatingFromRemote] = useState(false);
     const [cursors] = useState(new Map());
     const [onlineUsers, setOnlineUsers] = useState([]);
     const [isInCall, setIsInCall] = useState(false);
     const [callTimer, setCallTimer] = useState(null);
     const [localStream, setLocalStream] = useState(null);
-    const [peers] = useState(new Map());
+    const localStreamRef = useRef(null);
+    const peersRef = useRef(new Map());
+    const [remoteStreams, setRemoteStreams] = useState({});
     const [showConnectionModal, setShowConnectionModal] = useState(
         () => !(initialRoomId && authUtils.isAuthenticated())
     );
@@ -66,6 +70,10 @@ const CollaborativeEditor = ({ initialRoomId }) => {
     const [language, setLanguage] = useState('javascript');
     const [output, setOutput] = useState('');
     const [isRunning, setIsRunning] = useState(false);
+    
+    // AI Modal States
+    const [scorecardHtml, setScorecardHtml] = useState(null);
+    const [aiResultModal, setAiResultModal] = useState(null); // { title, content, agentType }
 
     // Connection state management
     const [isConnecting, setIsConnecting] = useState(false);
@@ -401,11 +409,16 @@ const CollaborativeEditor = ({ initialRoomId }) => {
         });
 
         socketInstance.on('error', (data) => {
-            console.error('Socket error:', data);
             showNotificationMessage(data.message, 'error');
         });
 
-        // Voice calling event handlers (keeping existing implementation)
+        // AI Auto-Insight
+        socketInstance.on('ai-auto-insight', (data) => {
+            showNotificationMessage(`🤖 AI Insight: ${data.insight}`, 'info');
+        });
+
+        
+        // Voice calling event handlers
         socketInstance.on('call-started', (data) => {
             console.log('Call started:', data);
             if (data.startedBy._id !== currentUser?._id) {
@@ -413,10 +426,66 @@ const CollaborativeEditor = ({ initialRoomId }) => {
             }
         });
 
+        const createPeer = (userToSignal, callerID, stream) => {
+            const peer = new SimplePeer({
+                initiator: true,
+                trickle: false,
+                stream,
+                config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] }
+            });
+
+            peer.on('signal', signal => {
+                socketInstance.emit('webrtc-signal', { toUserId: userToSignal, signal });
+            });
+
+            peer.on('stream', remoteStream => {
+                setRemoteStreams(prev => ({ ...prev, [userToSignal]: remoteStream }));
+            });
+
+            peersRef.current.set(userToSignal, peer);
+            return peer;
+        };
+
+        const addPeer = (incomingSignal, callerID, stream) => {
+            const peer = new SimplePeer({
+                initiator: false,
+                trickle: false,
+                stream,
+                config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] }
+            });
+
+            peer.on('signal', signal => {
+                socketInstance.emit('webrtc-signal', { toUserId: callerID, signal });
+            });
+
+            peer.on('stream', remoteStream => {
+                setRemoteStreams(prev => ({ ...prev, [callerID]: remoteStream }));
+            });
+
+            peer.signal(incomingSignal);
+            peersRef.current.set(callerID, peer);
+            return peer;
+        };
+
         socketInstance.on('user-joined-call', (data) => {
             console.log('User joined call:', data);
             showNotificationMessage(`${data.user.name} joined the call`, 'info');
             setCallParticipants(data.participantCount);
+
+            // If we are in the call, we initiate connection to the new user
+            if (localStreamRef.current) {
+                createPeer(data.user._id, currentUser?._id, localStreamRef.current);
+            }
+        });
+
+        socketInstance.on('webrtc-signal', payload => {
+            const { signal, fromUserId } = payload;
+            const peer = peersRef.current.get(fromUserId);
+            if (peer) {
+                peer.signal(signal);
+            } else if (localStreamRef.current) {
+                addPeer(signal, fromUserId, localStreamRef.current);
+            }
         });
 
         socketInstance.on('user-left-call', (data) => {
@@ -424,9 +493,14 @@ const CollaborativeEditor = ({ initialRoomId }) => {
             showNotificationMessage(`${data.user.name} left the call`, 'info');
             setCallParticipants(data.participantCount);
 
-            if (peers.has(data.user._id)) {
-                peers.get(data.user._id).destroy();
-                peers.delete(data.user._id);
+            if (peersRef.current.has(data.user._id)) {
+                peersRef.current.get(data.user._id).destroy();
+                peersRef.current.delete(data.user._id);
+                setRemoteStreams(prev => {
+                    const newStreams = { ...prev };
+                    delete newStreams[data.user._id];
+                    return newStreams;
+                });
             }
 
             if (data.callEnded) {
@@ -627,6 +701,7 @@ const CollaborativeEditor = ({ initialRoomId }) => {
             });
 
             setLocalStream(stream);
+            localStreamRef.current = stream;
             socket.emit('start-call', { roomId: currentRoomId });
 
             setIsInCall(true);
@@ -652,6 +727,7 @@ const CollaborativeEditor = ({ initialRoomId }) => {
             });
 
             setLocalStream(stream);
+            localStreamRef.current = stream;
             socket.emit('join-call', { roomId: currentRoomId });
 
         } catch (error) {
@@ -673,17 +749,19 @@ const CollaborativeEditor = ({ initialRoomId }) => {
         setIsInCall(false);
         stopCallTimer();
 
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-            setLocalStream(null);
+        if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => track.stop());
+            localStreamRef.current = null;
         }
+        setLocalStream(null);
 
-        peers.forEach(peer => peer.destroy());
-        peers.clear();
+        peersRef.current.forEach(peer => peer.destroy());
+        peersRef.current.clear();
+        setRemoteStreams({});
 
         setShowAudioControls(false);
         setShowCallNotification(false);
-    }, [localStream, peers]);
+    }, [localStream]);
 
     const startCallTimer = useCallback(() => {
         const startTime = Date.now();
@@ -771,6 +849,14 @@ const CollaborativeEditor = ({ initialRoomId }) => {
                 parts.push(result.status || 'No output');
             }
             setOutput(parts.join('\n').trim());
+            
+            if (socket) {
+                socket.emit('code-executed', {
+                    roomId: currentRoomId,
+                    code: code,
+                    language: language
+                });
+            }
         } catch (err) {
             console.error('Run error:', err);
             setOutput(
@@ -854,9 +940,9 @@ const CollaborativeEditor = ({ initialRoomId }) => {
             <div className="workspace-container">
                 <div className="left-editor-panel" style={{ flex: isRestrictedUser ? '1' : (mode === 'ide' ? '0 0 65%' : '0 0 70%') }}>
                     
-                    {!isRestrictedUser && <AIToolbar mode={mode} role={role} codeContext={editorValue} language={language} setOutput={setOutput} />}
+                    {!isRestrictedUser && <AIToolbar mode={mode} role={role} codeContext={editorValue} language={language} currentUser={currentUser} onShowAIResult={setAiResultModal} onShowScorecard={setScorecardHtml} />}
 
-                    <div className="editor-container" style={{ flexGrow: 1, overflow: 'hidden' }}>
+                    <div className="editor-container" style={{ flexGrow: 1 }}>
                         <CodeMirror
                             value={editorValue}
                             height="100%"
@@ -897,11 +983,23 @@ const CollaborativeEditor = ({ initialRoomId }) => {
                             role={role} 
                             codeContext={editorValue} 
                             language={language} 
+                            currentUser={currentUser}
                         />
                     </div>
                 )}
             </div>
 
+            
+            {/* Render remote audio streams */}
+            {Object.entries(remoteStreams).map(([userId, stream]) => (
+                <audio
+                    key={userId}
+                    autoPlay
+                    ref={audio => { if (audio && audio.srcObject !== stream) audio.srcObject = stream; }}
+                    style={{ display: 'none' }}
+                />
+            ))}
+            
             <Footer
                 connectionStatus={connectionStatus}
                 participantCount={participantCount}
@@ -920,6 +1018,22 @@ const CollaborativeEditor = ({ initialRoomId }) => {
             {showAudioControls && (
                 <AudioControls
                     onEndCall={endCall}
+                />
+            )}
+
+            {scorecardHtml && (
+                <ScorecardModal
+                    htmlContent={scorecardHtml}
+                    onClose={() => setScorecardHtml(null)}
+                />
+            )}
+
+            {aiResultModal && (
+                <AIResultModal
+                    title={aiResultModal.title}
+                    content={aiResultModal.content}
+                    agentType={aiResultModal.agentType}
+                    onClose={() => setAiResultModal(null)}
                 />
             )}
 

@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const { getJwtSecret } = require('../config/jwt');
 const User = require('../models/userModel');
 const Call = require('../models/callModel');
+const { runAllTools } = require('../utils/tools');
+const { getAIResponse } = require('../controllers/aiController');
 
 // Track active socket connections to prevent duplicates
 const activeConnections = new Map();
@@ -451,6 +453,38 @@ const handleCollaborativeEditor = (io) => {
             }
         });
 
+        // Handle code execution for auto-insights
+        socket.on('code-executed', async (data) => {
+            const { roomId, code, language } = data;
+            
+            // Only trigger insight if code is decently sized (avoid noise on 'console.log("hello")')
+            if (!code || code.length < 20) return;
+
+            try {
+                // Run tools to gather context
+                const toolResults = runAllTools(code);
+                
+                let personalization = "";
+                if (socket.user && socket.user.name) {
+                    personalization = `The user is ${socket.user.name}, a student. Tailor your response to their skill level.\n\n`;
+                }
+
+                const systemInstruction = personalization + "You are an autonomous code monitoring agent. After the candidate writes or runs code, provide ONE brief, actionable insight (max 2 sentences). Focus on: bugs, performance issues, or clever approaches you noticed.";
+                const prompt = `Analyze the following ${language} code execution:\n\n\`\`\`${language}\n${code}\n\`\`\`\n\n[TOOL RESULTS]\n${toolResults}\n[END TOOL RESULTS]\n\nProvide 1-2 sentences of insight.`;
+                
+                // Fetch AI response
+                const insight = await getAIResponse(prompt, systemInstruction, 'auto-insight');
+                
+                // Emit only to interviewers in the room, or to the user themselves
+                io.to(roomId).emit('ai-auto-insight', {
+                    insight,
+                    timestamp: new Date()
+                });
+            } catch (err) {
+                console.error("Failed to generate auto-insight:", err);
+            }
+        });
+
         // Voice calling events (keeping existing implementation)
         socket.on('start-call', async (data) => {
             try {
@@ -494,6 +528,139 @@ const handleCollaborativeEditor = (io) => {
             } catch (error) {
                 console.error('Error starting call:', error);
                 socket.emit('error', { message: 'Failed to start call' });
+            }
+        });
+
+        // Handle joining an existing call
+        socket.on('join-call', async (data) => {
+            try {
+                const { roomId } = data;
+                
+                if (socket.currentRoom !== roomId) {
+                    socket.emit('error', { message: 'Not connected to this session' });
+                    return;
+                }
+
+                const call = await Call.findOne({ roomId, isActive: true });
+                if (!call) {
+                    socket.emit('error', { message: 'No active call in this room' });
+                    return;
+                }
+
+                // Add participant if not already in
+                const isParticipant = call.participants.some(p => p.userId.toString() === socket.user._id.toString());
+                if (!isParticipant) {
+                    call.participants.push({
+                        userId: socket.user._id,
+                        joinedAt: new Date()
+                    });
+                    await call.save();
+                }
+
+                // Notify others that a user joined the call
+                socket.to(roomId).emit('user-joined-call', {
+                    user: {
+                        _id: socket.user._id,
+                        name: socket.user.name
+                    },
+                    participantCount: call.participants.length
+                });
+
+                // Acknowledge to the user who joined
+                socket.emit('call-joined', {
+                    callId: call._id,
+                    participantCount: call.participants.length,
+                    startTime: call.startTime
+                });
+
+            } catch (error) {
+                console.error('Error joining call:', error);
+                socket.emit('error', { message: 'Failed to join call' });
+            }
+        });
+
+        // Handle WebRTC signaling
+        socket.on('webrtc-signal', (data) => {
+            const targetSocketId = activeConnections.get(data.toUserId);
+            if (targetSocketId) {
+                io.to(targetSocketId).emit('webrtc-signal', {
+                    signal: data.signal,
+                    fromUserId: socket.user._id.toString(),
+                    user: {
+                        _id: socket.user._id,
+                        name: socket.user.name
+                    }
+                });
+            }
+        });
+
+        // Handle leaving a call
+        socket.on('leave-call', async (data) => {
+            try {
+                const { roomId } = data;
+                
+                const call = await Call.findOne({ roomId, isActive: true });
+                if (!call) return;
+
+                // Remove participant
+                call.participants = call.participants.filter(p => p.userId.toString() !== socket.user._id.toString());
+                
+                // If no participants left, end the call
+                let callEnded = false;
+                let duration = 0;
+                
+                if (call.participants.length === 0) {
+                    call.isActive = false;
+                    call.endTime = new Date();
+                    duration = Math.floor((call.endTime - call.startTime) / 1000);
+                    call.duration = duration;
+                    callEnded = true;
+                }
+                
+                await call.save();
+
+                socket.to(roomId).emit('user-left-call', {
+                    user: {
+                        _id: socket.user._id,
+                        name: socket.user.name
+                    },
+                    participantCount: call.participants.length,
+                    callEnded
+                });
+                
+                socket.emit('call-left', { callEnded, duration });
+
+            } catch (error) {
+                console.error('Error leaving call:', error);
+            }
+        });
+
+        // Handle ending a call for everyone
+        socket.on('end-call', async (data) => {
+            try {
+                const { roomId } = data;
+                
+                const call = await Call.findOne({ roomId, isActive: true });
+                if (!call) return;
+
+                // Only starter can end call for everyone, or just end it anyway for simplicity
+                call.isActive = false;
+                call.endTime = new Date();
+                const duration = Math.floor((call.endTime - call.startTime) / 1000);
+                call.duration = duration;
+                
+                await call.save();
+
+                io.to(roomId).emit('call-ended', {
+                    endedBy: {
+                        _id: socket.user._id,
+                        name: socket.user.name
+                    },
+                    duration
+                });
+
+            } catch (error) {
+                console.error('Error ending call:', error);
             }
         });
 

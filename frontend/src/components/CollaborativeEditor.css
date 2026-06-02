@@ -2,17 +2,20 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background: #0d0d11;
+    background: radial-gradient(circle at top left, #1a1a2e, #11111a);
     color: #f3f4f6;
+    font-family: 'Inter', system-ui, sans-serif;
 }
 
 .header {
-    background: #2d2d30;
-    padding: 10px 20px;
-    border-bottom: 1px solid #3e3e42;
+    background: rgba(20, 20, 30, 0.6);
+    backdrop-filter: blur(12px);
+    padding: 12px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .session-info {
@@ -59,12 +62,20 @@
 }
 
 .language-selector {
-    background: #3c3c3c;
+    background: rgba(255, 255, 255, 0.05);
     color: white;
-    border: 1px solid #555;
-    padding: 8px 12px;
-    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 8px;
     cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.language-selector:hover, .language-selector:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(168, 85, 247, 0.5);
 }
 
 .participants {
@@ -144,7 +155,29 @@
 .editor-container {
     flex: 1;
     position: relative;
-    overflow: hidden;
+    overflow: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-container .cm-editor {
+    height: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-container .cm-scroller {
+    overflow-y: auto !important;
+    flex-grow: 1;
+}
+
+/* Base CodeMirror element from react-codemirror */
+.cm-theme-light, .cm-theme-dark, .cm-theme {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .CodeMirror {
@@ -319,6 +352,7 @@
     flex-direction: column;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
     overflow: hidden;
+    min-height: 0;
 }
 
 .right-chat-panel {
